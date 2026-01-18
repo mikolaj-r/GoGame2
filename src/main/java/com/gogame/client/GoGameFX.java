@@ -215,7 +215,7 @@ public class GoGameFX extends Application implements GameView {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Game over");
         alert.setHeaderText(null);
-        alert.setContentText(result);
+        alert.setContentText(result + " won!");
         alert.show();
         passButton.setDisable(true);
         surrenderButton.setDisable(true);

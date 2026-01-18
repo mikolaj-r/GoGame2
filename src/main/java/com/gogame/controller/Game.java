@@ -115,7 +115,7 @@ public class Game extends Thread {
         PrintWriter opponentOut = (getActiveSocket() == socketBlack) ? outWhite : outBlack;
 
         if (input.equals("SURRENDER")) {
-            finishGame(outBlack, outWhite, (getActiveSocket() == socketBlack) ? "White" : "Black", "Surrender");
+            finishGame(outBlack, outWhite, (getActiveSocket() == socketBlack) ? "Surrender, White won!" : "Surrender, Black won!", "Surrender");
             return;
         }
 
@@ -332,7 +332,7 @@ public class Game extends Thread {
         }
 
         String result = "Score: Black=" + pointsBlack + ", White=" + pointsWhite;
-        if (pointsWhite > pointsBlack) result += " -> WHTIE WON!";
+        if (pointsWhite > pointsBlack) result += " -> WHITE WON!";
         else if (pointsBlack > pointsWhite) result += " -> BLACK WON!";
         else result += " -> DRAW!";
 
