@@ -8,11 +8,19 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 /**
+ * Serwer gry Go obsługujący połączenia klientów.
+ * Tworzy sesje gry dla par graczy.
+ *
  * Creator
  * pełni rolę "twórcy" dla obiektów Game.
  */
-
 public class Server {
+    /**
+     * Uruchamia serwer i nasłuchuje połączeń.
+     *
+     * @param args argumenty linii poleceń
+     * @throws Exception w przypadku błędu I/O
+     */
     public static void main(String[] args) throws Exception {
         try (ServerSocket listener = new ServerSocket(8001)) {
             System.out.println("SERVER IS WORKING");

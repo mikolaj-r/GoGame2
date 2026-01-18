@@ -2,6 +2,10 @@ package com.gogame;
 
 import java.util.Scanner;
 
+/**
+ * Główna klasa aplikacji konsolowej gry Go.
+ */
+
 public class App
 {
 
@@ -13,8 +17,13 @@ public class App
     public static int finalPointsBlack;
     public static int finalPointsWhite;
     // GRASP: Pure Fabrication
-    // Metoda pomocnicza do walidacji wejścia użytkownika,
-    // nie należy ani do Board, ani do Cell
+    /**
+     * Metoda pomocnicza do walidacji wejścia użytkownika,
+     * nie należy ani do Board, ani do Cell
+     *
+     * @param input wejście użytkownika
+     * @return true jeśli poprawne, false w przeciwnym razie
+     */
     public static boolean validInput(String input) {
 
 
@@ -77,9 +86,12 @@ public class App
 
 
 
-
-
-
+    /**
+     * Główna pętla gry.
+     *
+     * @param args argumenty linii poleceń
+     * @throws Exception w przypadku błędu I/O
+     */
     public static void main( String[] args ) throws Exception {
         // GRASP: Creator
         // App tworzy Board, bo nim zarządza i go używa

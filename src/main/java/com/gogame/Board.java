@@ -1,5 +1,10 @@
 package com.gogame;
 
+/**
+ * Reprezentuje planszę do gry Go 19x19.
+ * Przechowuje stan gry i zarządza logiką ruchów.
+ */
+
 public class Board {
     public Cell[][] positions; //0 puste 1 biale 2 czarne
     public boolean[][] visited = new boolean[19][19];
@@ -19,7 +24,9 @@ public class Board {
         }
     }
 
-
+    /**
+     * Kopiuje aktualny stan planszy do lastPositions.
+     */
     public void copyToLast() {
         for (int i = 0; i < 19; i++) {
             for (int j = 0; j < 19; j++) {
@@ -28,7 +35,12 @@ public class Board {
         }
     }
 
-
+    /**
+     * Usuwa łańcuch kamieni i dodaje punkty podczas liczenia końcowego.
+     *
+     * @param row wiersz początkowy
+     * @param column kolumna początkowa
+     */
     public void finalRemoveChain(int row, int column) {
         int color = positions[row][column].color;
         if (color == 0 || visited[row][column])
@@ -71,6 +83,9 @@ public class Board {
         }
     }
 
+    /**
+     * Aktualizuje liczbę oddechów dla wszystkich pól na planszy.
+     */
     public void updateBreaths() {
         // GRASP: Information Expert
         // Board zna układ planszy i sąsiedztwa pól,
@@ -112,6 +127,12 @@ public class Board {
         }
     }
 
+    /**
+     * Sprawdza czy łańcuch jest żywy i usuwa go jeśli martwy.
+     *
+     * @param row wiersz
+     * @param column kolumna
+     */
     public void checkChains(int row, int column)  //color true - black, false = white. jak chainalive to git, jak 0 to clearuje
     {
         int color = positions[row][column].color;
@@ -121,6 +142,12 @@ public class Board {
         }
     }
 
+    /**
+     * Usuwa łańcuch kamieni i dodaje punkty.
+     *
+     * @param row wiersz
+     * @param column kolumna
+     */
     public void removeChain(int row, int column) {
         int color = positions[row][column].color;
         if (color == 0 || visited[row][column])
@@ -163,7 +190,14 @@ public class Board {
         }
     }
 
-
+    /**
+     * Sprawdza czy łańcuch kamieni ma oddechy.
+     *
+     * @param row wiersz
+     * @param column kolumna
+     * @param color kolor kamienia
+     * @return 1 jeśli żywy, 0 jeśli martwy
+     */
     public int isChainAlive(int row, int column, int color) {
         visited[row][column] = true;
         if (positions[row][column].breaths > 0) //najwazniejszy fragment! jesli jakikolwiek w lancuchu zywy to caly lancuch zywy
@@ -202,7 +236,9 @@ public class Board {
         return 0;
     }
 
-
+    /**
+     * Sprawdza całą planszę i usuwa martwe łańcuchy.
+     */
     public void checkBoard() {
         // GRASP: Information Expert
         // Board sprawdza stan całej planszy i decyduje,
@@ -219,6 +255,11 @@ public class Board {
 
     }
 
+    /**
+     * Sprawdza czy nastąpiła sytuacja Ko.
+     *
+     * @return true jeśli Ko, false w przeciwnym razie
+     */
     public boolean isKo() {
         for (int i = 0; i < 19; i++) {
             for (int j = 0; j < 19; j++) {
@@ -230,6 +271,14 @@ public class Board {
         return true;
     }
 
+    /**
+     * Sprawdza czy ruch jest legalny.
+     *
+     * @param row wiersz
+     * @param column kolumna
+     * @param turn true dla czarnego, false dla białego
+     * @return true jeśli ruch legalny
+     */
     public boolean checkMove(int row, int column, boolean turn) //true = black
     {
         //w tej funkcji zrobie troche dirty ruch, jak wiem ze miejsce jest jak do samobojstwa ale wiem ze zabije inny lancuch to dam sobie oddechy :)
@@ -302,7 +351,9 @@ public class Board {
         }
     }
 
-
+    /**
+     * Wyświetla planszę w konsoli.
+     */
     public void show() {
         // GRASP: Pure Fabrication
         // Metoda do prezentacji stanu planszy w konsoli,
@@ -330,7 +381,13 @@ public class Board {
         }
     }
 
-
+    /**
+     * Sprawdza rekurencyjnie czy pole należy do terytorium białego.
+     *
+     * @param row wiersz
+     * @param col kolumna
+     * @return true jeśli białego terytorium
+     */
     private boolean checkWhiteTerritoryRecursive(int row, int col) {
         // Jeśli pole jest poza planszą git
         if (row < 0 || row >= 19 || col < 0 || col >= 19) {
@@ -361,6 +418,13 @@ public class Board {
         return up && down && left && right;
     }
 
+    /**
+     * Sprawdza rekurencyjnie czy pole należy do terytorium czarnego.
+     *
+     * @param row wiersz
+     * @param col kolumna
+     * @return true jeśli czarnego terytorium
+     */
     private boolean checkBlackTerritoryRecursive(int row, int col) {
         // Jeśli pole jest poza planszą git
         if (row < 0 || row >= 19 || col < 0 || col >= 19) {
@@ -393,6 +457,9 @@ public class Board {
         return up && down && left && right;
     }
 
+    /**
+     * Oblicza terytoria obu graczy na planszy.
+     */
     public void calculateTerritories() {
         for (int i = 0; i < 19; i++) {
             for (int j = 0; j < 19; j++) {

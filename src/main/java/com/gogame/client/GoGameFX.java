@@ -13,6 +13,10 @@ import javafx.stage.Stage;
 
 import java.util.Optional;
 
+/**
+ * Główna klasa aplikacji JavaFX dla gry Go.
+ * Implementuje interfejs użytkownika i logikę renderowania.
+ */
 public class GoGameFX extends Application implements GameView {
 
     private static final int BOARD_SIZE = 19;
@@ -39,6 +43,11 @@ public class GoGameFX extends Application implements GameView {
         launch(args);
     }
 
+    /**
+     * Inicjalizuje i uruchamia interfejs użytkownika.
+     *
+     * @param primaryStage główne okno aplikacji
+     */
     @Override
     public void start(Stage primaryStage) {
         connection = new Client("localhost", 8001, this);
@@ -214,6 +223,9 @@ public class GoGameFX extends Application implements GameView {
         playOnButton.setDisable(true);
     }
 
+    /**
+     * Rysuje planszę i wszystkie kamienie.
+     */
     private void drawBoard() {
         gc.setFill(Color.web("#663c09"));
         gc.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
@@ -240,6 +252,13 @@ public class GoGameFX extends Application implements GameView {
         }
     }
 
+    /**
+     * Rysuje kamień na planszy.
+     *
+     * @param row wiersz
+     * @param col kolumna
+     * @param color kolor kamienia
+     */
     private void drawStone(int row, int col, Color color) {
         double x = PADDING + col * TILE_SIZE;
         double y = PADDING + row * TILE_SIZE;
@@ -252,6 +271,12 @@ public class GoGameFX extends Application implements GameView {
         }
     }
 
+    /**
+     * Rysuje znacznik na kamieniu.
+     *
+     * @param row wiersz
+     * @param col kolumna
+     */
     private void drawMark(int row, int col) {
         double x = PADDING + col * TILE_SIZE;
         double y = PADDING + row * TILE_SIZE;

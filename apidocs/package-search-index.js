@@ -1,0 +1,1 @@
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"com.gogame"},{"l":"com.gogame.client"},{"l":"com.gogame.controller"},{"l":"com.gogame.server"}];updateSearchResults();

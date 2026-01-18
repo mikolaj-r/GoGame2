@@ -5,6 +5,10 @@ import javafx.application.Platform;
 import java.io.*;
 import java.net.Socket;
 
+/**
+ * Klient gry Go łączący się z serwerem.
+ * Obsługuje komunikację sieciową i aktualizuje widok gry.
+ */
 public class Client extends Thread {
     private final String host;
     private final int port;
@@ -13,12 +17,22 @@ public class Client extends Thread {
     private PrintWriter out;
     private BufferedReader in;
 
+    /**
+     * Tworzy nowego klienta gry.
+     *
+     * @param host adres hosta serwera
+     * @param port port serwera
+     * @param view interfejs widoku gry
+     */
     public Client(String host, int port, GameView view) {
         this.host = host;
         this.port = port;
         this.view = view;
     }
 
+    /**
+     * Główna pętla klienta obsługująca komunikację z serwerem.
+     */
     @Override
     public void run() {
         try {
@@ -41,6 +55,11 @@ public class Client extends Thread {
 
     private boolean isNegotiation = false;
 
+    /**
+     * Przetwarza wiadomość otrzymaną z serwera.
+     *
+     * @param message wiadomość od serwera
+     */
     private void processServerMessage(String message) {
         Platform.runLater(() -> {
             System.out.println("CLIENT IN: " + message);

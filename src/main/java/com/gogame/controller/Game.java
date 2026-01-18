@@ -9,8 +9,15 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.List;
 
+/**
+ * Reprezentuje sesję gry między dwoma graczami.
+ * Zarządza stanem gry i komunikacją z klientami.
+ */
 public class Game extends Thread {
 
+    /**
+     * Stany gry podczas rozgrywki i negocjacji.
+     */
     private enum State {
         PLAYING,
         NEGOTIATION_BLACK,
@@ -30,6 +37,12 @@ public class Game extends Thread {
     private int pendingDeadRow = -1;
     private int pendingDeadCol = -1;
 
+    /**
+     * Tworzy nową sesję gry.
+     *
+     * @param black socket gracza czarnego
+     * @param white socket gracza białego
+     */
     public Game(Socket black, Socket white) {
         this.socketBlack = black;
         this.socketWhite = white;
@@ -37,6 +50,9 @@ public class Game extends Thread {
         this.board.updateBreaths();
     }
 
+    /**
+     * Główna pętla gry obsługująca komunikację z klientami.
+     */
     @Override
     public void run() {
         try {
@@ -71,6 +87,11 @@ public class Game extends Thread {
         }
     }
 
+    /**
+     * Zwraca socket aktywnego gracza w zależności od stanu gry.
+     *
+     * @return socket aktywnego gracza
+     */
     private Socket getActiveSocket() {
         switch (currentState) {
             case PLAYING: return blackTurn ? socketBlack : socketWhite;
@@ -82,6 +103,13 @@ public class Game extends Thread {
         }
     }
 
+    /**
+     * Przetwarza komendę od gracza.
+     *
+     * @param input komenda
+     * @param outBlack writer gracza czarnego
+     * @param outWhite writer gracza białego
+     */
     private void processCommand(String input, PrintWriter outBlack, PrintWriter outWhite) {
         PrintWriter currentOut = (getActiveSocket() == socketBlack) ? outBlack : outWhite;
         PrintWriter opponentOut = (getActiveSocket() == socketBlack) ? outWhite : outBlack;
@@ -106,6 +134,15 @@ public class Game extends Thread {
         }
     }
 
+    /**
+     * Obsługuje komendy podczas rozgrywki.
+     *
+     * @param input komenda
+     * @param outBlack writer gracza czarnego
+     * @param outWhite writer gracza białego
+     * @param currentOut writer aktywnego gracza
+     * @param opponentOut writer przeciwnika
+     */
     private void handlePlaying(String input, PrintWriter outBlack, PrintWriter outWhite, PrintWriter currentOut, PrintWriter opponentOut) {
         if (input.equals("PASS")) {
             passCount++;
@@ -141,6 +178,12 @@ public class Game extends Thread {
         }
     }
 
+    /**
+     * Rozpoczyna fazę negocjacji martwych kamieni.
+     *
+     * @param outBlack writer gracza czarnego
+     * @param outWhite writer gracza białego
+     */
     private void initiateNegotiation(PrintWriter outBlack, PrintWriter outWhite) {
         this.scoringBoard = new Board();
         BoardHelper.copyBoardState(this.scoringBoard, this.board);
@@ -156,6 +199,15 @@ public class Game extends Thread {
         outBlack.println("YOUR_TURN");
     }
 
+    /**
+     * Obsługuje fazę negocjacji martwych kamieni.
+     *
+     * @param input komenda
+     * @param outBlack writer gracza czarnego
+     * @param outWhite writer gracza białego
+     * @param currentOut writer aktywnego gracza
+     * @param opponentOut writer przeciwnika
+     */
     private void handleNegotiationState(String input, PrintWriter outBlack, PrintWriter outWhite, PrintWriter currentOut, PrintWriter opponentOut) {
         if (input.equals("PLAYON")) {
             currentState = State.PLAYING;
@@ -214,6 +266,15 @@ public class Game extends Thread {
         }
     }
 
+    /**
+     * Obsługuje potwierdzanie martwych kamieni przez przeciwnika.
+     *
+     * @param input komenda (Y/N)
+     * @param outBlack writer gracza czarnego
+     * @param outWhite writer gracza białego
+     * @param currentOut writer aktywnego gracza
+     * @param opponentOut writer przeciwnika
+     */
     private void handleConfirmation(String input, PrintWriter outBlack, PrintWriter outWhite, PrintWriter currentOut, PrintWriter opponentOut) {
         List<int[]> deadGroup = BoardHelper.getChain(scoringBoard, pendingDeadRow, pendingDeadCol);
 
@@ -250,6 +311,12 @@ public class Game extends Thread {
         opponentOut.println("YOUR_TURN");
     }
 
+    /**
+     * Oblicza końcowy wynik gry.
+     *
+     * @param outBlack writer gracza czarnego
+     * @param outWhite writer gracza białego
+     */
     private void calculateScore(PrintWriter outBlack, PrintWriter outWhite) {
         scoringBoard.calculateTerritories();
 
@@ -272,12 +339,26 @@ public class Game extends Thread {
         finishGame(outBlack, outWhite, result, "Game over");
     }
 
+    /**
+     * Kończy grę i wysyła wynik do graczy.
+     *
+     * @param outBlack writer gracza czarnego
+     * @param outWhite writer gracza białego
+     * @param result wynik gry
+     * @param reason powód zakończenia
+     */
     private void finishGame(PrintWriter outBlack, PrintWriter outWhite, String result, String reason) {
         outBlack.println("GAME_OVER " + result);
         outWhite.println("GAME_OVER " + result);
         currentState = State.FINISHED;
     }
 
+    /**
+     * Wysyła informację o turze do obu graczy.
+     *
+     * @param outBlack writer gracza czarnego
+     * @param outWhite writer gracza białego
+     */
     private void sendTurnUpdate(PrintWriter outBlack, PrintWriter outWhite) {
         if (blackTurn) {
             outBlack.println("MESSAGE Your move");
