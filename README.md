@@ -13,6 +13,5 @@ java -cp .\GoGame-1.0-SNAPSHOT.jar com.gogame.server.Server
 
 #### Client:
 ```
-cd target
-java -cp .\GoGame-1.0-SNAPSHOT.jar com.gogame.server.Client
+mvn javafx:run
 ```
