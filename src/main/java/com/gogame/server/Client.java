@@ -1,142 +1,160 @@
 package com.gogame.server;
 
-import com.gogame.Board;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import com.gogame.client.GameView;
+import javafx.application.Platform;
+import java.io.*;
 import java.net.Socket;
-import java.net.SocketException;
-import java.util.Scanner;
 
-/**
- * Pure Fabrication
- * Obsługuje komunikacje sieciową i interakcje z użytkownikiem.
- * Służy jako adapter między graczem a serwerem.
- *
- * Low Coupling
- * Klient nie decyduje o poprawności ruchów (zależy to od serwera).
- */
-
-public class Client {
-    // wzorzec proxy
-    // Obiekt board jest lokalnym reprezentantem stanu gry.
-    // Nie wykonuje walidacji, wyswietla to co zatwierdzone przez serwer.
-    private Board board;
+public class Client extends Thread {
+    private final String host;
+    private final int port;
+    private final GameView view;
     private Socket socket;
-    private BufferedReader in;
     private PrintWriter out;
-    private Scanner console;
-    private boolean isMyTurn = false;
+    private BufferedReader in;
 
-    public void start() throws Exception {
-        socket = new Socket("localhost", 8001);
-        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        out = new PrintWriter(socket.getOutputStream(), true);
-        console = new Scanner(System.in);
+    public Client(String host, int port, GameView view) {
+        this.host = host;
+        this.port = port;
+        this.view = view;
+    }
 
-        // Creator - Klient tworzy swoją planszę do wyświetlania
-        board = new Board();
-        board.updateBreaths();
-
-        System.out.println("Connected to server.");
-
-        // Pętla nasłuchująca komunikatów od serwera
+    @Override
+    public void run() {
         try {
-            String response;
-            // Pętla czytająca komunikaty serwera
-            while ((response = in.readLine()) != null) {
-                if (response.startsWith("INIT")) {
-                    String color = response.split(" ")[1];
-                    System.out.println("You are player: " + color);
-                    board.show();
-                }
-                else if (response.startsWith("MESSAGE")) {
-                    System.out.println("Server: " + response.substring(8));
-                }
-                else if (response.startsWith("ERROR")) {
-                    System.out.println(response.substring(6));
-                    if(isMyTurn) handleInput();
-                }
-                else if (response.equals("YOUR_TURN")) {
-                    isMyTurn = true;
-                    System.out.println("Your move (e.g. A1) or PASS:");
-                    handleInput();
-                }
-                else if (response.startsWith("MOVE_OK")) {
-                    String[] parts = response.split(" ");
-                    int row = Integer.parseInt(parts[1]);
-                    int col = Integer.parseInt(parts[2]);
-                    boolean isBlack = parts[3].equals("true");
+            socket = new Socket(host, port);
+            out = new PrintWriter(socket.getOutputStream(), true);
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-                    board.move(row, col, isBlack);
-                    board.updateBreaths();
-                    board.checkBoard();
+            Platform.runLater(() -> view.showMessage("Connected to server"));
 
-                    System.out.println("\nBoard updated:");
-                    board.show();
-                    isMyTurn = false;
-                }
-                else if (response.equals("GAME_OVER")) {
-                    System.out.println("Game Over! (Score calculated on server logs)");
-                    break;
-                }
+            String line;
+            while ((line = in.readLine()) != null) {
+                processServerMessage(line);
             }
-        } catch (SocketException e) {
-            System.out.println("Connection closed by server");
         } catch (IOException e) {
-            System.out.println("I/O ERROR: " + e.getMessage());
+            Platform.runLater(() -> view.showMessage("Disconnected: " + e.getMessage()));
         } finally {
-            try { socket.close(); } catch (IOException e) {}
-            System.out.println("Client closed.");
+            close();
         }
     }
 
-    private void handleInput() {
-        while (true) {
-            String input = console.nextLine().trim().toUpperCase();
-            if (input.equals("PASS")) {
-                out.println("PASS");
-                break;
-            }
+    private boolean isNegotiation = false;
 
-            if (input.length() < 2) {
-                System.out.println("Invalid format. Use ColRow (e.g. A1).");
-                continue;
-            }
-
-            char colChar = input.charAt(0);
-            if (colChar < 'A' || colChar > 'S') {
-                System.out.println("Invalid column.");
-                continue;
-            }
+    private void processServerMessage(String message) {
+        Platform.runLater(() -> {
+            System.out.println("CLIENT IN: " + message);
 
             try {
-                int col = colChar - 'A';
-                String rowStr = input.substring(1);
-                int row = Integer.parseInt(rowStr) - 1; // Konwersja 1-19 na 0-18
-
-                if (row < 0 || row > 18) {
-                    System.out.println("Row out of bounds.");
-                    continue;
+                if (message.startsWith("INIT")) {
+                    boolean isBlack = message.contains("BLACK");
+                    view.setPlayerColor(isBlack);
+                }
+                else if (message.equals("YOUR_TURN")) {
+                    view.setMyTurn(true);
+                    if (isNegotiation) {
+                        view.showMessage("NEGOTATION: Mark dead stones.");
+                    } else {
+                        view.showMessage("Your move");
+                    }
+                }
+                else if (message.startsWith("MESSAGE")) {
+                    String content = message.substring(8);
+                    view.showMessage(content);
+                    if (content.contains("thinking") || content.contains("Opponent") || content.contains("Wait")) {
+                        view.setMyTurn(false);
+                    }
+                }
+                else if (message.startsWith("MOVE_OK")) {
+                    String[] parts = message.split(" ");
+                    int row = Integer.parseInt(parts[1]);
+                    int col = Integer.parseInt(parts[2]);
+                    boolean isBlackMove = Boolean.parseBoolean(parts[3]);
+                    view.updateBoard(row, col, isBlackMove ? 1 : 2);
+                }
+                else if (message.startsWith("UPDATE")) {
+                    try {
+                        String[] parts = message.split(" ");
+                        int row = Integer.parseInt(parts[1]);
+                        int col = Integer.parseInt(parts[2]);
+                        int color = Integer.parseInt(parts[3]); // Powinno być 0
+                        view.updateBoard(row, col, color);
+                    } catch (Exception e) {
+                        System.err.println("Error UPDATE: " + message);
+                    }
+                }
+                else if (message.startsWith("PHASE_NEGOTIATION")) {
+                    isNegotiation = true;
+                    view.setNegotiationPhase(true);
+                    view.showMessage("NEGOTIATION PHASE");
                 }
 
-                // Wysyłamy przetworzone współrzędne do serwera
-                out.println("MOVE " + row + " " + col);
-                break;
+                else if (message.startsWith("MARK_CLEAR")) {
+                    view.clearAllHighlights();
+                }
 
-            } catch (NumberFormatException e) {
-                System.out.println("Invalid row number.");
+                else if (message.startsWith("MARK")) {
+                    try {
+                        String[] parts = message.split(" ");
+                        int row = Integer.parseInt(parts[1]);
+                        int col = Integer.parseInt(parts[2]);
+                        view.highlightStone(row, col, true);
+                    } catch (Exception e) {
+                        System.err.println("Parsing error MARK: " + message);
+                    }
+                }
+                else if (message.startsWith("UNMARK")) {
+                    try {
+                        String[] parts = message.split(" ");
+                        int row = Integer.parseInt(parts[1]);
+                        int col = Integer.parseInt(parts[2]);
+                        view.highlightStone(row, col, false);
+                    } catch (Exception e) {}
+                }
+                // -----------------------
+
+                else if (message.startsWith("CONFIRM_REQ")) {
+                    String text = message.substring(message.indexOf(" ", 12) + 1);
+                    view.showConfirmationDialog(text);
+                }
+                else if (message.startsWith("DEAD_REMOVED")) {
+                    String[] parts = message.split(" ");
+                    int row = Integer.parseInt(parts[1]);
+                    int col = Integer.parseInt(parts[2]);
+
+                    view.highlightStone(row, col, false);
+                    view.removeStone(row, col);
+                }
+                else if (message.startsWith("GAME_OVER")) {
+                    view.setMyTurn(false);
+                    view.endGame(message.substring(10));
+                }
+                else if (message.startsWith("ERROR")) {
+                    view.showMessage(message.substring(6));
+                    view.setMyTurn(true);
+                }
+            } catch (Exception e) {
+                System.err.println("Message fail: " + message);
+                e.printStackTrace();
             }
-        }
+        });
     }
 
-    public static void main(String[] args) throws Exception {
-        try {
-            new Client().start();
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }
+    public void sendMove(int row, int col) { if(out!=null) out.println("MOVE " + row + " " + col); }
+    public void sendPass() { if(out!=null) out.println("PASS"); }
+    public void sendQuit() { if(out!=null) out.println("QUIT"); }
+    public void sendSurrender() { if(out!=null) out.println("SURRENDER"); }
+    public void sendDeadMark(int row, int col) { if(out!=null) out.println("DEAD " + row + " " + col); }
+    public void sendConfirmation(boolean agree) { if(out!=null) out.println(agree ? "Y" : "N"); }
+    public void sendDone() { if(out!=null) out.println("DONE"); }
+    public void sendPlayOn() {
+        if(out!=null) out.println("PLAYON");
+        Platform.runLater(() -> {
+            isNegotiation = false;
+            view.setNegotiationPhase(false);
+            view.clearAllHighlights();
+        });
     }
+
+    public void close() { try { if(socket!=null) socket.close(); } catch(Exception e){} }
 }
