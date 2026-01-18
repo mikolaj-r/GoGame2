@@ -3,6 +3,9 @@ package com.gogame;
 import java.util.ArrayList;
 import java.util.List;
 
+//Metody pomocnicze oraz te skopiowane z klasy App aby można je było zaimplementowac
+//w architekturze klient-serwer
+
 public class BoardHelper {
 
     public static void makeMove(Board board, int row, int col, boolean isBlack) {

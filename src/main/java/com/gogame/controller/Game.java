@@ -58,7 +58,6 @@ public class Game extends Thread {
                 String input = activeIn.readLine();
                 if (input == null) break;
 
-                // Logowanie po stronie serwera
                 System.out.println("SERVER: " + input + " [State: " + currentState + "]");
 
                 processCommand(input, outBlack, outWhite);
@@ -111,7 +110,7 @@ public class Game extends Thread {
         if (input.equals("PASS")) {
             passCount++;
             currentOut.println("MESSAGE You passed.");
-            opponentOut.println("MESSAGE Oponent passed");
+            opponentOut.println("MESSAGE Opponent passed");
             blackTurn = !blackTurn;
 
             if (passCount >= 2) {

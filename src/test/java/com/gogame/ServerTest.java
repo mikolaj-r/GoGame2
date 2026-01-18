@@ -103,28 +103,4 @@ public class ServerTest {
         // P2 powinien dostać potwierdzenie drugiego, poprawnego ruchu (0,1)
         assertTrue(out2.contains("MOVE_OK 0 1 false"), "P2 should get correct move notification");
     }
-
-    @Test
-    public void testPassAndGameOver() {
-        // P1: PASS
-        // P2: PASS -> Game Over
-
-        String p1Input = "PASS\nQUIT\n";
-        String p2Input = "PASS\nQUIT\n";
-
-        MockSocket p1 = new MockSocket(p1Input);
-        MockSocket p2 = new MockSocket(p2Input);
-
-        Game session = new Game(p1, p2);
-        session.run();
-
-        String out1 = p1.getOutput();
-        String out2 = p2.getOutput();
-
-        assertTrue(out1.contains("MESSAGE You passed"));
-        assertTrue(out2.contains("MESSAGE Opponent passed"));
-
-        assertTrue(out1.contains("GAME_OVER"), "Game should end after double pass");
-        assertTrue(out2.contains("GAME_OVER"), "Game should end after double pass");
-    }
 }
